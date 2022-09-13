@@ -8,7 +8,7 @@ function App() {
   const initializeSmooch = useCallback(async () => {
     Smooch?.destroy();
     Smooch.init({
-      integrationId: "62e773a2c7530e00f07e182f",
+      integrationId: "63202ffe7c1fd800f3882add",
       embedded: true,
       fixedHeader: true,
       delegate: {
