@@ -1,44 +1,89 @@
-import { useCallback, useEffect, useRef } from "react";
-import Smooch from "smooch";
+import { FormEvent, useEffect, useRef, useState } from "react";
 
-let smoochInitializing = false;
+const CHAT_URL = "https://web.thecalile.app/chat/index.html";
+
+type IFrame = HTMLIFrameElement & {
+  contentWindow: HTMLIFrameElement["contentWindow"] & {
+    chatInitialize: (params: {
+      jwtToken: string;
+      integrationId: string;
+      propertyCode: string;
+      propertyName: string;
+    }) => void;
+  };
+};
+
+type FormState = {
+  jwtToken: string;
+  integrationId: string;
+  propertyCode: string;
+  propertyName: string;
+}
 
 function App() {
-  const chatContainerRef = useRef(null);
-  const initializeSmooch = useCallback(async () => {
-    Smooch?.destroy();
-    Smooch.init({
-      integrationId: "63202ffe7c1fd800f3882add",
-      embedded: true,
-      fixedHeader: true,
-      delegate: {
-        beforeSend(message, data) {
-          return {
-            ...message,
-            metadata: {
-              property_name: "Calile Hotel",
-              short_property_code: "CH001",
-            },
-          };
-        },
-      },
-    });
-    // @ts-ignore
-    Smooch?.render(chatContainerRef.current);
-  }, []);
-
+  const iframeRef = useRef<IFrame>(null);
   useEffect(() => {
-    if (!smoochInitializing) {
-      smoochInitializing = true;
-      initializeSmooch();
-    }
-  }, [initializeSmooch]);
+    const onMessageHandler = (event: MessageEvent) => {
+      console.log(event.data);
+      const data = event.data ? JSON.parse(event.data) : undefined;
+      if (data?.event === "onError")
+        // do something with data
+        console.log(data);
+    };
+    window.addEventListener("message", onMessageHandler);
+    return () => {
+      window.removeEventListener("message", onMessageHandler);
+    };
+  }, [iframeRef]);
+  const getContentWindow = () =>
+    iframeRef.current?.contentWindow
+  ;
+  const [form, setForm] = useState<FormState>({
+    jwtToken: "",
+    integrationId: "",
+    propertyCode: "",
+    propertyName: "",
+  });
+
+  const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    var formData = new FormData(e.currentTarget);
+    setForm(Object.fromEntries(formData) as any as FormState);
+  };
 
   return (
-    <div
-      ref={chatContainerRef}
-      style={{ position: "fixed", top: 0, bottom: 0, left: 0, right: 0 }}
-    />
+    <div className="main-container">
+      <form onSubmit={handleSubmit} className="form">
+        <label>
+          JWT Token: <input name="jwtToken" required />
+        </label>
+        <label>
+          Integration ID: <input name="integrationId" required />
+        </label>
+        <label>
+          Property Code: <input name="propertyCode" required />
+        </label>
+        <label>
+          Property Name: <input name="propertyName" required />
+        </label>
+        <button type="submit">Submit</button>
+      </form>
+      <iframe
+        // change the key to replace the element and trigger reload
+        key={Object.values(form).join("")}
+        title="web-embed"
+        ref={iframeRef}
+        onLoad={() => {
+          if (form.jwtToken && form.integrationId && form.propertyCode && form.propertyName) {
+            console.log(`Loaded... Initializing chat... \n${JSON.stringify(form, null, 2)}`)
+            getContentWindow()?.chatInitialize(form);
+            return
+          }
+          console.log("Loaded... Incomplete form data. Skipping initialization..")
+        }}
+        src={CHAT_URL}
+      />
+    </div>
   );
 }
 
