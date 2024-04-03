@@ -33,6 +33,9 @@ function App() {
   useEffect(() => {
     const onMessageHandler = (event: MessageEvent) => {
       const data = tryJSONParse(event.data);
+      // ignore webpack events
+      if (data.type?.startsWith?.('webpack'))
+        return
       if (data?.event === "onError") {
         alert("An error occured, check the html console for detail");
         console.error(data)
