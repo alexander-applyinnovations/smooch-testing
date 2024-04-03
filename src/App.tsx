@@ -1,4 +1,4 @@
-import { FormEvent, useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
 
 const CHAT_URL = "https://web.thecalile.app/chat/index.html";
 
@@ -18,7 +18,7 @@ type FormState = {
   integrationId: string;
   propertyCode: string;
   propertyName: string;
-}
+};
 
 function App() {
   const iframeRef = useRef<IFrame>(null);
@@ -35,53 +35,91 @@ function App() {
       window.removeEventListener("message", onMessageHandler);
     };
   }, [iframeRef]);
-  const getContentWindow = () =>
-    iframeRef.current?.contentWindow
-  ;
-  const [form, setForm] = useState<FormState>({
+  const getContentWindow = () => iframeRef.current?.contentWindow;
+  const defaults = {
     jwtToken: "",
-    integrationId: "",
-    propertyCode: "",
-    propertyName: "",
-  });
-
-  const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    var formData = new FormData(e.currentTarget);
-    setForm(Object.fromEntries(formData) as any as FormState);
+    integrationId: "65faae8fd5ff0e73f62ee73f",
+    propertyCode: "CMITCBR",
+    propertyName: "The Calile Hotel",
   };
+  const params: FormState = Object.assign(
+    defaults,
+    Object.fromEntries(new URLSearchParams(window.location.search))
+  );
+
+  useEffect(() => {
+    const proxiedUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(
+      CHAT_URL
+    )}`;
+    fetch(proxiedUrl)
+      .then((response) => response.json())
+      .then(({ contents }) => {
+        const blob = new Blob([contents], { type: "text/html" });
+        const url = URL.createObjectURL(blob);
+        console.log(url);
+        if (iframeRef.current) {
+          iframeRef.current.src = url;
+        }
+      });
+  }, []);
 
   return (
     <div className="main-container">
-      <form onSubmit={handleSubmit} className="form">
+      <form method="get" className="form">
         <label>
-          JWT Token: <input name="jwtToken" required />
+          <span>JWT Token:</span>{" "}
+          <input name="jwtToken" defaultValue={params.jwtToken} required />
         </label>
         <label>
-          Integration ID: <input name="integrationId" required />
+          <span>Integration ID:</span>{" "}
+          <input
+            name="integrationId"
+            defaultValue={params.integrationId}
+            required
+          />
         </label>
         <label>
-          Property Code: <input name="propertyCode" required />
+          <span>Property Code:</span>{" "}
+          <input
+            name="propertyCode"
+            defaultValue={params.propertyCode}
+            required
+          />
         </label>
         <label>
-          Property Name: <input name="propertyName" required />
+          <span>Property Name:</span>{" "}
+          <input
+            name="propertyName"
+            defaultValue={params.propertyName}
+            required
+          />
         </label>
         <button type="submit">Submit</button>
       </form>
       <iframe
-        // change the key to replace the element and trigger reload
-        key={Object.values(form).join("")}
         title="web-embed"
         ref={iframeRef}
         onLoad={() => {
-          if (form.jwtToken && form.integrationId && form.propertyCode && form.propertyName) {
-            console.log(`Loaded... Initializing chat... \n${JSON.stringify(form, null, 2)}`)
-            getContentWindow()?.chatInitialize(form);
-            return
+          if (
+            params.jwtToken &&
+            params.integrationId &&
+            params.propertyCode &&
+            params.propertyName
+          ) {
+            console.log(
+              `Loaded... Initializing chat... \n${JSON.stringify(
+                params,
+                null,
+                2
+              )}`
+            );
+            getContentWindow()?.chatInitialize(params);
+            return;
           }
-          console.log("Loaded... Incomplete form data. Skipping initialization..")
+          console.log(
+            "Loaded... Incomplete form data. Skipping initialization.."
+          );
         }}
-        src={CHAT_URL}
       />
     </div>
   );
