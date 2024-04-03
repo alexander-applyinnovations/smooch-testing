@@ -25,7 +25,6 @@ function App() {
   useEffect(() => {
     const onMessageHandler = (event: MessageEvent) => {
       const data = event.data ? JSON.parse(event.data) : undefined;
-      console.log(data)
       if (data?.event === "onError") {
         alert("An error occured, check the html console for detail");
         console.error(data)
@@ -101,12 +100,6 @@ function App() {
       <iframe
         title="web-embed"
         ref={iframeRef}
-        onError={(e) => {
-          console.log('>>>e',e)
-        }}
-        onErrorCapture={(e) => {
-          console.log('>>>ec',e)
-        }}
         onLoad={() => {
           if (
             params.jwtToken &&
@@ -114,7 +107,7 @@ function App() {
             params.propertyCode &&
             params.propertyName
           ) {
-            console.log(
+            console.debug(
               `Loaded... Initializing chat... \n${JSON.stringify(
                 params,
                 null,
@@ -124,7 +117,7 @@ function App() {
             getContentWindow()?.chatInitialize(params);
             return;
           }
-          console.log(
+          console.debug(
             "Loaded... Incomplete form data. Skipping initialization.."
           );
         }}
