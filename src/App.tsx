@@ -24,11 +24,14 @@ function App() {
   const iframeRef = useRef<IFrame>(null);
   useEffect(() => {
     const onMessageHandler = (event: MessageEvent) => {
-      console.log(event.data);
       const data = event.data ? JSON.parse(event.data) : undefined;
-      if (data?.event === "onError")
-        // do something with data
-        console.log(data);
+      console.log(data)
+      if (data?.event === "onError") {
+        alert("An error occured, check the html console for detail");
+        console.error(data)
+      } else if (data) {
+        console.debug(data)
+      }
     };
     window.addEventListener("message", onMessageHandler);
     return () => {
@@ -56,7 +59,6 @@ function App() {
       .then(({ contents }) => {
         const blob = new Blob([contents], { type: "text/html" });
         const url = URL.createObjectURL(blob);
-        console.log(url);
         if (iframeRef.current) {
           iframeRef.current.src = url;
         }
@@ -99,6 +101,12 @@ function App() {
       <iframe
         title="web-embed"
         ref={iframeRef}
+        onError={(e) => {
+          console.log('>>>e',e)
+        }}
+        onErrorCapture={(e) => {
+          console.log('>>>ec',e)
+        }}
         onLoad={() => {
           if (
             params.jwtToken &&
