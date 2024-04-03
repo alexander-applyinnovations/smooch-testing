@@ -20,11 +20,19 @@ type FormState = {
   propertyName: string;
 };
 
+function tryJSONParse(data: any) {
+  try {
+    return JSON.parse(data);
+  } catch (e) {
+    return data;
+  }
+}
+
 function App() {
   const iframeRef = useRef<IFrame>(null);
   useEffect(() => {
     const onMessageHandler = (event: MessageEvent) => {
-      const data = event.data ? JSON.parse(event.data) : undefined;
+      const data = tryJSONParse(event.data);
       if (data?.event === "onError") {
         alert("An error occured, check the html console for detail");
         console.error(data)
