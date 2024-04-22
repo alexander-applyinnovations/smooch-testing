@@ -1,6 +1,6 @@
 import { useEffect, useRef } from "react";
 
-const CHAT_URL = "https://web.thecalile.app/chat/index.html";
+const CHAT_URL = "https://web.development.thecaliletest.app/chat/index.html";
 
 type IFrame = HTMLIFrameElement & {
   contentWindow: HTMLIFrameElement["contentWindow"] & {
